@@ -21,7 +21,7 @@ This project implements a pipeline for reconstructing 3D models from multiple 2D
 │       └── run-colmap-photometric.sh # Script for photometric stereo fusion & meshing
 └── .gitignore                  # Git ignore file
 ```
-
+In order to install the colmap software follow this steps: [COLMAP Installation guide](https://colmap.github.io/install.html)
 ## Colmap pipeline
 - **Automatic Feature Extraction:** Detects keypoints and descriptors in input images using COLMAP.
 - **Exhaustive Feature Matching:** Uses GPU acceleration for matching features across images.
