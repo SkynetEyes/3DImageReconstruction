@@ -190,10 +190,21 @@ def generate_delaunay_mesh(dense_folder, colmap_path="colmap"):
 
 if __name__ == '__main__':
     # Replace with your image and output folder paths
-    image_folder = "data/scan6_max"
+    image_folder = "data/scan6"
     output_folder = "output_colmap"
+    # image_folder = "data/celula_liso_completo"
+    # output_folder = "output_colmap_celula" with this the mesh won't work
         
     # Path to COLMAP executable (may be just "colmap" if it's in your PATH)
     colmap_path = "colmap"
         
-    run_colmap_pipeline(image_folder, output_folder, colmap_path)
+    # Run the full pipeline
+    success = run_colmap_pipeline(image_folder, output_folder, colmap_path)
+    
+    if success:
+        # Generate mesh using Poisson reconstruction
+        dense_folder = os.path.join(output_folder, "dense")
+        generate_mesh(dense_folder, colmap_path)
+        
+        # Optionally, also try Delaunay triangulation
+        # generate_delaunay_mesh(dense_folder, colmap_path)
