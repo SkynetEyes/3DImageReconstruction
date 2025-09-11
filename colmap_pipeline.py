@@ -136,6 +136,58 @@ def run_colmap_pipeline(image_folder, output_folder, colmap_path="colmap"):
     print("Pipeline completed successfully!")
     return True
 
+def generate_mesh(dense_folder, colmap_path="colmap"):
+    """
+    Generate a mesh from the fused point cloud using Poisson reconstruction.
+    """
+    fused_ply = os.path.join(dense_folder, "fused.ply")
+    meshed_ply = os.path.join(dense_folder, "meshed-poisson.ply")
+    
+    if not os.path.exists(fused_ply):
+        print(f"Fused point cloud not found at {fused_ply}")
+        return False
+    
+    print("Step 7: Poisson mesh reconstruction")
+    poisson_cmd = [
+        colmap_path, "poisson_mesher",
+        "--input_path", fused_ply,
+        "--output_path", meshed_ply
+    ]
+    
+    try:
+        subprocess.run(poisson_cmd, check=True)
+        print(f"Mesh generated successfully at {meshed_ply}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Poisson meshing failed: {e}")
+        return False
+
+def generate_delaunay_mesh(dense_folder, colmap_path="colmap"):
+    """
+    Generate a mesh from the fused point cloud using Delaunay triangulation.
+    """
+    fused_ply = os.path.join(dense_folder, "fused.ply")
+    meshed_ply = os.path.join(dense_folder, "meshed-delaunay.ply")
+    
+    if not os.path.exists(fused_ply):
+        print(f"Fused point cloud not found at {fused_ply}")
+        return False
+    
+    print("Step 7: Delaunay mesh reconstruction")
+    delaunay_cmd = [
+        colmap_path, "delaunay_mesher",
+        "--input_path", fused_ply,
+        "--output_path", meshed_ply
+    ]
+    
+    try:
+        subprocess.run(delaunay_cmd, check=True)
+        print(f"Delaunay mesh generated successfully at {meshed_ply}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Delaunay meshing failed: {e}")
+        return False
+
 if __name__ == '__main__':
     # Replace with your image and output folder paths
     image_folder = "data/scan6_max"
