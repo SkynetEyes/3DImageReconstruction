@@ -1,0 +1,15 @@
+# Core packages
+python-dotenv
+ultralytics
+jupyter
+ipykernel
+opencv-python
+
+# PyTorch + CUDA 11.7 for MX330
+torch==1.13.1+cu117
+torchvision==0.14.1+cu117
+torchaudio==0.13.1+cu117
+--extra-index-url https://download.pytorch.org/whl/cu117
+
+# Ensure NumPy <2 for compatibility with Ultralytics and PyTorch 1.13
+numpy<2
