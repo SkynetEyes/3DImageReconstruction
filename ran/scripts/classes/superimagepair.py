@@ -19,6 +19,7 @@ class SuperImagePair():
         self.R = None
         self.t = None
         self.points3d = None
+        self.points3d_colors = None
 
     def set_intrinsic(self, K):
         self.K = K
@@ -166,10 +167,12 @@ class SuperImagePair():
         print("Translation t (up to scale):\n", t.ravel())
         print(f"Number of matches used for pose: {len(matches_pose)}")
 
+
     def estimate_points3d(self):
         """
         Triangulate 3D points from inlier matches used in pose recovery.
         Stores results in self.points3d as (N,3) array in camera1 coordinates.
+        Also stores self.points3d_colors as (N,3) array of RGB values.
         """
         if self.R is None or self.t is None:
             print("Pose not estimated yet. Run estimate_pose() first.")
@@ -184,23 +187,43 @@ class SuperImagePair():
         kpts1 = self.simag1.keypoints
         kpts2 = self.simag2.keypoints
 
-        # Points in pixel coordinates
-        pts1 = np.float32([kpts1[m.queryIdx].pt for m in self.matches_pose])
-        pts2 = np.float32([kpts2[m.trainIdx].pt for m in self.matches_pose])
+        # --- Points in pixel coordinates ---
+        pts1_pix = np.float32([kpts1[m.queryIdx].pt for m in self.matches_pose])
+        pts2_pix = np.float32([kpts2[m.trainIdx].pt for m in self.matches_pose])
 
-        # Projection matrices
+        # --- Projection matrices ---
         P1 = self.K @ np.hstack([np.eye(3), np.zeros((3, 1))])  # camera1 at origin
         P2 = self.K @ np.hstack([self.R, self.t])  # camera2 pose relative to camera1
 
-        pts1 = pts1.T  # shape (2, N)
-        pts2 = pts2.T
+        # --- Triangulate requires shape (2, N) ---
+        pts1_t = pts1_pix.T
+        pts2_t = pts2_pix.T
 
-        # Triangulate
-        points4d_h = cv2.triangulatePoints(P1, P2, pts1, pts2)  # shape (4, N)
+        points4d_h = cv2.triangulatePoints(P1, P2, pts1_t, pts2_t)  # shape (4, N)
         points3d = (points4d_h[:3] / points4d_h[3]).T  # convert to (N,3)
 
         self.points3d = points3d
-        print(f"Triangulated {points3d.shape[0]} 3D points.")
+
+        # --- Get colors from both images and average them ---
+        colors = []
+        for (x1, y1), (x2, y2) in zip(pts1_pix, pts2_pix):
+            # Round and clamp to integer pixel coordinates
+            x1, y1 = int(round(x1)), int(round(y1))
+            x2, y2 = int(round(x2)), int(round(y2))
+
+            if (0 <= x1 < self.simag1.imag_color.shape[1] and 0 <= y1 < self.simag1.imag_color.shape[0] and
+                    0 <= x2 < self.simag2.imag_color.shape[1] and 0 <= y2 < self.simag2.imag_color.shape[0]):
+                color1 = self.simag1.imag_color[y1, x1].astype(np.float32)
+                color2 = self.simag2.imag_color[y2, x2].astype(np.float32)
+                mean_color = ((color1 + color2) / 2.0).astype(np.uint8)
+            else:
+                mean_color = np.array([0, 0, 0], dtype=np.uint8)  # fallback black
+
+            colors.append(mean_color)
+
+        self.points3d_colors = np.array(colors)  # shape (N,3), dtype=uint8
+
+        print(f"Triangulated {points3d.shape[0]} 3D points with colors.")
 
 
     def get_camera_1_pose(self):
@@ -227,6 +250,10 @@ class SuperImagePair():
 
     def get_points3d(self):
         return self.points3d
+
+
+    def get_points3d_colors(self):
+        return self.points3d_colors
 
     # ---- all your other methods remain unchanged ----
     def imag_w_matches(self, kind, max_matches=0):
