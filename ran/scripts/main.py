@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 from classes.plot import Plot
 from classes.imagemisc import  ImageMisc
 from classes.featureDetector import FeatureDetector
@@ -76,6 +77,14 @@ def StructedFromMotionPair(imag1Path, imag2Path, verbose):
 def StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose):
     sfm = SfmGlobal(SUPERIMAGEPAIRs)
     camera_poses, points3d = sfm.run()
+
+     # Convert points3d to NumPy array if it's a list
+    if isinstance(points3d, list):
+        if len(points3d) > 0:
+            points3d = np.vstack(points3d)  # Combine all point arrays
+        else:
+            points3d = np.empty((0, 3))  # Empty array with correct shape
+
     if verbose : Plot.plot_cameras_frustum(camera_poses, points3d)
 
 
