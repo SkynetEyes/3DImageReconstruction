@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+from scipy.spatial import cKDTree
+
+
 from classes.plot import Plot
 from classes.imagemisc import  ImageMisc
 from classes.featureDetector import FeatureDetector
@@ -7,6 +10,61 @@ from classes.superimage import SuperImage
 from classes.superimagepair import SuperImagePair
 from classes.camera import SimplePinholeCamera
 from classes.sfmGlobal import SfmGlobal
+
+
+def remove_nearby_points(points, threshold):
+    """
+    Remove points that are closer than `threshold` to any other point.
+
+    Args:
+        points: np.ndarray of shape (N,3)
+        threshold: float, minimum allowed distance between points
+
+    Returns:
+        np.ndarray of filtered points
+    """
+    if len(points) == 0:
+        return points
+
+    tree = cKDTree(points)
+    to_keep = np.ones(len(points), dtype=bool)
+
+    for i, point in enumerate(points):
+        if not to_keep[i]:
+            continue
+        # Find all neighbors within threshold (including self)
+        neighbors = tree.query_ball_point(point, threshold)
+        neighbors.remove(i)  # remove self
+        to_keep[neighbors] = False  # remove all neighbors that are too close
+
+    return points[to_keep]
+
+
+def remove_outliers_std(points, n_std):
+    """
+    Remove points that are farther than `n_std` standard deviations from the centroid.
+
+    Args:
+        points: np.ndarray of shape (N,3)
+        n_std: float, number of standard deviations to keep
+
+    Returns:
+        np.ndarray of filtered points
+    """
+    if len(points) == 0:
+        return points
+
+    centroid = points.mean(axis=0)
+    std_dev = points.std(axis=0)
+
+    # Keep points within n_std in all axes
+    lower_bound = centroid - n_std * std_dev
+    upper_bound = centroid + n_std * std_dev
+
+    mask = np.all((points >= lower_bound) & (points <= upper_bound), axis=1)
+    filtered_points = points[mask]
+
+    return filtered_points
 
 
 def StructedFromMotionPair(imag1Path, imag2Path, verbose):
@@ -69,8 +127,12 @@ def StructedFromMotionPair(imag1Path, imag2Path, verbose):
     R1, t1 = sip.get_camera_1_pose()
     R2, t2 = sip.get_camera_2_pose()
     points3d = sip.get_points3d()
+    points3d_color = sip.get_points3d_colors()
 
-    if verbose : Plot.plot_cameras_frustum([(R1, t1), (R2, t2)], points3d)
+    if verbose:
+        Plot.plot_cameras_frustum([(R1, t1), (R2, t2)], points3d, points3d_size=15)
+        Plot.plot_cameras_frustum([(R1, t1), (R2, t2)], points3d, points3d_color, points3d_size=15)
+
 
     return sip
 
@@ -87,19 +149,30 @@ def StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose):
 
     if verbose : Plot.plot_cameras_frustum(camera_poses, points3d)
 
+    return camera_poses, points3d
+
 
 
 if __name__ == '__main__':
-    # ROOT_DIR_IMAGES = '../SampleSet/MVS Data/scan6_2_1'
-    # paths = ImageMisc.get_paths(ROOT_DIR_IMAGES, '*max.png')
-    # imag1Path, imag2Path = next(iter(zip(paths[:-1], paths[1:])))
-    # superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=True)
-
-
     ROOT_DIR_IMAGES = '../SampleSet/MVS Data/scan6_2_1'
     paths = ImageMisc.get_paths(ROOT_DIR_IMAGES, '*max.png')
-    SUPERIMAGEPAIRs = []
-    for imag1Path, imag2Path in zip(paths[:-1], paths[1:]):
-        superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=False)
-        SUPERIMAGEPAIRs.append(superimagepair)
-    StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose=True)
+    imag1Path, imag2Path = next(iter(zip(paths[:-1], paths[1:])))
+    superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=True)
+
+
+    # ROOT_DIR_IMAGES = '../SampleSet/MVS Data/scan6_7_1'
+    # paths = ImageMisc.get_paths(ROOT_DIR_IMAGES, '*max.png')
+    # SUPERIMAGEPAIRs = []
+    # for imag1Path, imag2Path in zip(paths[:-1], paths[1:]):
+    #     superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=False)
+    #     SUPERIMAGEPAIRs.append(superimagepair)
+    #
+    # camera_poses, points3d = StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose=False)
+    #
+    # Plot.plot_cameras_frustum(camera_poses, points3d)
+    #
+    # points3d = remove_nearby_points(points3d, threshold=0.1)
+    # Plot.plot_cameras_frustum(camera_poses, points3d)
+    #
+    # points3d = remove_outliers_std(points3d, n_std=2)
+    # Plot.plot_cameras_frustum(camera_poses, points3d)
