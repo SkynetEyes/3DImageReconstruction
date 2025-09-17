@@ -15,8 +15,9 @@ class SfmGlobal:
                 - sip.estimate_pose()
         """
         self.sip_list = sip_list
-        self.camera_poses = []   # list of (R, C) for each camera in global frame
-        self.points3d = []       # accumulated 3D points in world frame
+        self.camera_poses = []       # list of (R, C) for each camera in global frame
+        self.points3d = []           # accumulated 3D points in world frame
+        self.points3d_colors = []    # accumulated colors for 3D points
 
     def run(self):
         # --- Fix the first camera as the world origin ---
@@ -42,14 +43,17 @@ class SfmGlobal:
             # Triangulate new 3D points (in SIP local frame)
             sip.estimate_points3d()
             local_pts = sip.get_points3d()
+            local_colors = sip.get_points3d_colors()
 
             # Transform points from SIP local frame -> global frame
             world_pts = (R_prev @ local_pts.T).T + C_prev.ravel()
 
             self.points3d.extend(world_pts)
+            self.points3d_colors.extend(local_colors)
 
-        # Stack all 3D points into an array
+        # Stack all 3D points and colors into arrays
         if len(self.points3d) > 0:
             self.points3d = np.vstack(self.points3d)
+            self.points3d_colors = np.vstack(self.points3d_colors)
 
-        return self.camera_poses, self.points3d
+        return self.camera_poses, self.points3d, self.points3d_colors
