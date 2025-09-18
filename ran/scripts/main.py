@@ -10,6 +10,7 @@ from classes.superimage import SuperImage
 from classes.superimagepair import SuperImagePair
 from classes.camera import SimplePinholeCamera
 from classes.sfmGlobal import SfmGlobal
+from classes.quality_analyzer import analyze_reconstruction_quality
 
 
 def remove_nearby_points(points, points_color=None, threshold=0.01):
@@ -167,8 +168,7 @@ if __name__ == '__main__':
     # imag1Path, imag2Path = next(iter(zip(paths[:-1], paths[1:])))
     # superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=True)
 
-
-    ROOT_DIR_IMAGES = '../SampleSet/MVS Data/scan6_3_1'
+    ROOT_DIR_IMAGES = '../SampleSet/MVS Data/scan6_7_1'
     paths = ImageMisc.get_paths(ROOT_DIR_IMAGES, '*max.png')
     SUPERIMAGEPAIRs = []
     for imag1Path, imag2Path in zip(paths[:-1], paths[1:]):
@@ -177,14 +177,67 @@ if __name__ == '__main__':
 
     camera_poses, points3d, points3d_color = StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose=False)
 
-    # Plot.plot_cameras_frustum(camera_poses, points3d)
-    # Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
+    print(f"\nOriginal reconstruction: {len(points3d)} 3D points")
 
-    # points3d, points3d_color = remove_nearby_points(points3d, points3d_color, threshold=0.1)
-    # Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
+    # Optional: Apply filtering to reduce noise
+    points3d, points3d_color = remove_nearby_points(points3d, points3d_color, threshold=0.05)
+    points3d, points3d_color = remove_outliers_std(points3d, points3d_color, n_std=2.0)
+    
+    print(f"After filtering: {len(points3d)} 3D points")
 
-    points3d, points3d_color = remove_outliers_std(points3d, points3d_color, n_std=2)
-
-    # Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
-    # Plot.plot_cameras_surface(camera_poses, points3d, points3d_color)
-    Plot.show_poisson_surface_plot(camera_poses, points3d, points3d_color)
+    # Conservative densification to prevent error propagation
+    density_factor = 1.2  # Very conservative factor to minimize distortion
+    
+    print(f"Using conservative density factor: {density_factor:.1f}")
+    
+    # Import densifier for direct testing
+    from classes.point_densifier import densify_point_cloud
+    
+    # Test conservative method
+    print("Testing Conservative method (error-aware)...")
+    conservative_points, conservative_colors = densify_point_cloud(
+        points3d, points3d_color,
+        method='conservative',
+        density_factor=density_factor,
+        max_points=8000
+    )
+    
+    # GPU-accelerated Open3D visualization
+    print("\n=== GPU-Accelerated Visualization Sequence ===")
+    print("You will see 3 different visualizations:")
+    print("1. Original sparse point cloud (no surface)")
+    print("2. Original sparse points with Poisson surface") 
+    print("3. Conservative densified points with Poisson surface")
+    print("\nEach window will open separately. Close each one to proceed to the next.")
+    
+    input("\nPress Enter to start visualization sequence...")
+    
+    # Option 1: Show original sparse point cloud (for reference)
+    print("\n1. Showing original sparse point cloud...")
+    Plot.show_point_cloud_gpu(camera_poses, points3d, points3d_color)
+    
+    # Option 2: Show original sparse points with Poisson surface
+    print("\n2. Showing original sparse Poisson surface...")
+    Plot.show_poisson_surface_gpu(
+        camera_poses, points3d, points3d_color,
+        densify=False,  # Original sparse points
+        poisson_depth=5,  # Lower depth for sparse points
+        use_gpu=True
+    )
+    
+    # Option 3: Show conservative densification with Poisson surface
+    print("\n3. Showing conservative densified Poisson surface...")
+    Plot.show_poisson_surface_gpu(
+        camera_poses, conservative_points, conservative_colors,
+        densify=False,  # Points are already densified
+        poisson_depth=6,  # Higher detail for densified points
+        use_gpu=True
+    )
+    
+    print("\n=== Visualization Complete ===")
+    print(f"Summary:")
+    print(f"- Original points: {len(points3d)}")
+    print(f"- Conservative densified points: {len(conservative_points)}")
+    print(f"- Density increase: {len(conservative_points)/len(points3d):.2f}x")
+    
+    
