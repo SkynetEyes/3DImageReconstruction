@@ -1,6 +1,4 @@
 import cv2
-import numpy as np
-from scipy.spatial import cKDTree
 
 
 from classes.plot import Plot
@@ -12,86 +10,17 @@ from classes.camera import SimplePinholeCamera
 from classes.sfmGlobal import SfmGlobal
 
 
-def remove_nearby_points(points, points_color=None, threshold=0.01):
-    """
-    Remove points that are closer than `threshold` to any other point.
-    Also removes corresponding entries in points_color if provided.
-
-    Args:
-        points: np.ndarray of shape (N,3)
-        points_color: optional np.ndarray of shape (N,3) corresponding RGB colors
-        threshold: float, minimum allowed distance between points
-
-    Returns:
-        filtered_points: np.ndarray of filtered points (M,3)
-        filtered_colors: np.ndarray of corresponding colors (M,3) if points_color is provided,
-                         otherwise None
-    """
-    if len(points) == 0:
-        return points, points_color if points_color is not None else None
-
-    tree = cKDTree(points)
-    to_keep = np.ones(len(points), dtype=bool)
-
-    for i, point in enumerate(points):
-        if not to_keep[i]:
-            continue
-        # Find all neighbors within threshold (including self)
-        neighbors = tree.query_ball_point(point, threshold)
-        neighbors.remove(i)  # remove self
-        to_keep[neighbors] = False  # remove all neighbors that are too close
-
-    filtered_points = points[to_keep]
-
-    if points_color is not None:
-        filtered_colors = points_color[to_keep]
-    else:
-        filtered_colors = None
-
-    return filtered_points, filtered_colors
-
-
-def remove_outliers_std(points, points_color=None, n_std=2.0):
-    """
-    Remove points that are farther than `n_std` standard deviations from the centroid.
-    Optionally removes corresponding entries in points_color.
-
-    Args:
-        points: np.ndarray of shape (N,3)
-        points_color: optional np.ndarray of shape (N,3) corresponding RGB colors
-        n_std: float, number of standard deviations to keep
-
-    Returns:
-        filtered_points: np.ndarray of filtered points (M,3)
-        filtered_colors: np.ndarray of corresponding colors (M,3) if points_color is provided,
-                         otherwise None
-    """
-    if len(points) == 0:
-        return points, points_color if points_color is not None else None
-
-    centroid = points.mean(axis=0)
-    std_dev = points.std(axis=0)
-
-    # Keep points within n_std in all axes
-    lower_bound = centroid - n_std * std_dev
-    upper_bound = centroid + n_std * std_dev
-    mask = np.all((points >= lower_bound) & (points <= upper_bound), axis=1)
-
-    filtered_points = points[mask]
-    filtered_colors = points_color[mask] if points_color is not None else None
-
-    return filtered_points, filtered_colors
-
-
-def StructedFromMotionPair(imag1Path, imag2Path, verbose):
+def StructedFromMotionPair(imag1Path, imag2Path, verbose=0):
     # paths = ImageMisc.get_paths(ROOT_DIR_IMAGES, '*max.png')
 
     paths = [imag1Path, imag2Path]
     imags_color = ImageMisc.load_images(paths)
-    # Plot.plot_images_grid(imags_color, 1, 2, (15, 10))
+    if verbose == 2:
+        Plot.plot_images_grid(imags_color, 1, 2, (15, 10))
 
     imags_gray = list(map(ImageMisc.to_grayscale, imags_color))
-    # Plot.plot_images_grid(imags_gray, 1, 2, (15, 10))
+    if verbose == 2:
+        Plot.plot_images_grid(imags_gray, 1, 2, (15, 10))
 
     FD = FeatureDetector(kind='sift')
     SUPERIMAGES = []
@@ -105,7 +34,8 @@ def StructedFromMotionPair(imag1Path, imag2Path, verbose):
         SUPERIMAGES.append(si)
 
     imags_w_keypoints = [si.imag_w_keypoints() for si in SUPERIMAGES]
-    # Plot.plot_images_grid(imags_w_keypoints, 1, 2, (15, 10))
+    if verbose == 2:
+        Plot.plot_images_grid(imags_w_keypoints, 1, 2, (15, 10))
 
     si1 = SUPERIMAGES[0]
     si2 = SUPERIMAGES[1]
@@ -117,13 +47,15 @@ def StructedFromMotionPair(imag1Path, imag2Path, verbose):
     sip.match()
 
     imag_w_matches = sip.imag_w_matches(kind='good-matches')
-    # Plot.plot_images_grid([imag_w_matches], 1, 1, (15, 10))
+    if verbose == 2:
+        Plot.plot_images_grid([imag_w_matches], 1, 1, (15, 10))
 
     sip.estimate_fundamental_matrix(ransacReprojThreshold=0.25, confidence=0.99)
     sip.evaluate_fundamental_estimation_quality()
 
     imag1_epipolar, imag2_epipolar = sip.imag_w_epipolar(num_points=200, scale=2.5, point_size=20)
-    # Plot.plot_images_grid([imag1_epipolar, imag2_epipolar], 1, 2, (15, 10))
+    if verbose == 2:
+        Plot.plot_images_grid([imag1_epipolar, imag2_epipolar], 1, 2, (15, 10))
 
     imag_gray = next(iter(imags_gray))
     imag_H, imag_W = imag_gray.shape
@@ -149,7 +81,6 @@ def StructedFromMotionPair(imag1Path, imag2Path, verbose):
         Plot.plot_cameras_frustum([(R1, t1), (R2, t2)], points3d, points3d_size=15)
         Plot.plot_cameras_frustum([(R1, t1), (R2, t2)], points3d, points3d_color, points3d_size=15)
 
-
     return sip
 
 def StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose):
@@ -160,31 +91,87 @@ def StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose):
     return camera_poses, points3d, points3d_color
 
 
+def get_casa(n: int):
+    ROOT_DIR = '../SampleSet/MVS Data'
+
+    if n == 0:
+        folder = f"{ROOT_DIR}/scan6_max_all"
+    else:
+        folder = f"{ROOT_DIR}/scan6_{n}_1"
+
+    paths = ImageMisc.get_paths(folder, '*max.png')
+    return paths
+
+
+def get_chaleira(n: int):
+    ROOT_DIR = '../SampleSet/Chaleira'
+
+    if n == 0:
+        folder = f"{ROOT_DIR}/cl_all"
+    else:
+        folder = f"{ROOT_DIR}/cl_{n}"
+
+    paths = ImageMisc.get_paths(folder, '*')
+    return paths
+
+
+def get_banana(n: int):
+    ROOT_DIR = '../SampleSet/Banana'
+
+    if n == 0:
+        folder = f"{ROOT_DIR}/ba_all"
+    else:
+        folder = f"{ROOT_DIR}/ba_{n}"
+
+    paths = ImageMisc.get_paths(folder, '*')
+    return paths
+
+def get_banana2(n: int):
+    ROOT_DIR = '../SampleSet/Banana2'
+
+    if n == 0:
+        folder = f"{ROOT_DIR}/ba_all"
+    else:
+        folder = f"{ROOT_DIR}/ba_{n}"
+
+    paths = ImageMisc.get_paths(folder, '*')
+    return paths
+
 
 if __name__ == '__main__':
-    # ROOT_DIR_IMAGES = '../SampleSet/MVS Data/scan6_2_1'
-    # paths = ImageMisc.get_paths(ROOT_DIR_IMAGES, '*max.png')
+    paths = get_casa(4)
+    # paths = get_chaleira()
+    # paths = get_banana(5)
+    # paths = get_banana2(3)
+
+
+    ################
+    ### SFM PAIR ###
+    ################
+
     # imag1Path, imag2Path = next(iter(zip(paths[:-1], paths[1:])))
-    # superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=True)
+    # superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=2)
 
 
-    ROOT_DIR_IMAGES = '../SampleSet/MVS Data/scan6_3_1'
-    paths = ImageMisc.get_paths(ROOT_DIR_IMAGES, '*max.png')
+   #################
+   #### SFM SEQU ###
+   #################
+
     SUPERIMAGEPAIRs = []
     for imag1Path, imag2Path in zip(paths[:-1], paths[1:]):
-        superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=False)
+        superimagepair = StructedFromMotionPair(imag1Path, imag2Path, verbose=0)
         SUPERIMAGEPAIRs.append(superimagepair)
 
-    camera_poses, points3d, points3d_color = StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose=False)
+    camera_poses, points3d, points3d_color = StructedFromMotionSequential(SUPERIMAGEPAIRs, verbose=2)
 
-    # Plot.plot_cameras_frustum(camera_poses, points3d)
-    # Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
+    Plot.plot_cameras_frustum(camera_poses, points3d)
+    Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
 
-    # points3d, points3d_color = remove_nearby_points(points3d, points3d_color, threshold=0.1)
-    # Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
+    points3d, points3d_color = remove_nearby_points(points3d, points3d_color, threshold=0.1)
+    Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
 
     points3d, points3d_color = remove_outliers_std(points3d, points3d_color, n_std=2)
 
     # Plot.plot_cameras_frustum(camera_poses, points3d, points3d_color, points3d_size=15)
     # Plot.plot_cameras_surface(camera_poses, points3d, points3d_color)
-    Plot.show_poisson_surface_plot(camera_poses, points3d, points3d_color)
+    # Plot.show_poisson_surface_plot(camera_poses, points3d, points3d_color)
