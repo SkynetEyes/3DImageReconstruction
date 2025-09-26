@@ -118,11 +118,15 @@ DATA = {
     'casa' : Data.get_casa,
     'chaleira' : Data.get_chaleira,
     'banana' : Data.get_banana,
-    'banana2' : Data.get_banana2
+    'banana2' : Data.get_banana2,
+    'banana3': Data.get_banana3,
+    'cubo': Data.get_cubo,
+    'rosto': Data.get_rosto,
+    'cachorro': Data.get_cachorro
 }
 
 if __name__ == '__main__':
-    dataset = 'banana2'
+    dataset = 'rosto'
     paths = DATA[dataset](2)
     print(paths)
 
@@ -130,11 +134,12 @@ if __name__ == '__main__':
     superimagepair = StructedFromMotionPair(imag1Path, imag2Path, save_plot_dir=f"output/sfmp_{dataset}", show_plot=False, show_plot_3d=True)
 
 
-    fx = 5.44309962e+03
-    fy = 5.50161148e+03
-    cx = 1.65444814e+03
-    cy = 2.18952236e+03
-    superimagepair = StructedFromMotionPair(imag1Path, imag2Path, save_plot_dir=f"output/sfmp_{dataset}_cal", show_plot=False, show_plot_3d=True,
-                                            fx=fx, fy=fy, cx=cx, cy=cy)
+    # fx = 2.59530310e+03
+    # fy = 2.57686065e+03
+    # cx = 8.15407092e+02
+    # cy = 81447017e+02
+    # superimagepair = StructedFromMotionPair(imag1Path, imag2Path, save_plot_dir=f"output/sfmp_{dataset}_cal", show_plot=False, show_plot_3d=True,
+    #                                         fx=fx, fy=fy, cx=cx, cy=cy)
+
 
     Plot.show()

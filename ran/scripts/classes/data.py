@@ -83,3 +83,81 @@ class Data:
 
         paths = ImageMisc.get_paths(folder, '*')
         return paths
+
+    @classmethod
+    def get_banana3(cls, n: int):
+        ROOT_DIR = '../SampleSet/Banana3'
+
+        # Allowed folders (ignore calib_images and anything else)
+        allowed_folders = {f"ba_{i}" for i in range(2, 10)} | {"ba_all"}
+
+        if n == 0:
+            folder = os.path.join(ROOT_DIR, "ba_all")
+        else:
+            folder = os.path.join(ROOT_DIR, f"ba_{n}")
+
+        # Ensure only valid folders are used
+        if not os.path.basename(folder) in allowed_folders:
+            raise ValueError(f"Folder {folder} is not a valid Banana dataset")
+
+        paths = ImageMisc.get_paths(folder, '*')
+        return paths
+
+    @classmethod
+    def get_cubo(cls, n: int):
+        ROOT_DIR = '../SampleSet/Cubo'
+
+        # Allowed folders (ignore calib_images and anything else)
+        allowed_folders = {f"cu_{i}" for i in range(2, 10)} | {"cu_all"}
+
+        if n == 0:
+            folder = os.path.join(ROOT_DIR, "cu_all")
+        else:
+            folder = os.path.join(ROOT_DIR, f"cu_{n}")
+
+        # Ensure only valid folders are used
+        if not os.path.basename(folder) in allowed_folders:
+            raise ValueError(f"Folder {folder} is not a valid Cubo dataset")
+
+        paths = ImageMisc.get_paths(folder, '*')
+        return paths
+
+
+    @classmethod
+    def get_rosto(cls, n: int):
+        ROOT_DIR = '../SampleSet/Rosto'
+
+        # Allowed folders (ignore calib_images and anything else)
+        allowed_folders = {f"ro_{i}" for i in range(2, 11)} | {"ro_all"}
+
+        if n == 0:
+            folder = os.path.join(ROOT_DIR, "ro_all")
+        else:
+            folder = os.path.join(ROOT_DIR, f"ro_{n}")
+
+        # Ensure only valid folders are used
+        if not os.path.basename(folder) in allowed_folders:
+            raise ValueError(f"Folder {folder} is not a valid Rosto dataset")
+
+        paths = ImageMisc.get_paths(folder, '*')
+        return paths
+
+
+    @classmethod
+    def get_cachorro(cls, n: int):
+        ROOT_DIR = '../SampleSet/Cachorro'
+
+        # Allowed folders (ignore calib_images and anything else)
+        allowed_folders = {f"ca_{i}" for i in range(2, 10)} | {"ca_all"}
+
+        if n == 0:
+            folder = os.path.join(ROOT_DIR, "ca_all")
+        else:
+            folder = os.path.join(ROOT_DIR, f"ca_{n}")
+
+        # Ensure only valid folders are used
+        if not os.path.basename(folder) in allowed_folders:
+            raise ValueError(f"Folder {folder} is not a valid Cachorro dataset")
+
+        paths = ImageMisc.get_paths(folder, '*')
+        return paths

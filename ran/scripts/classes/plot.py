@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import open3d as o3d
 import os
 
+
 def draw_camera_frustum(ax, R, t, scale=0.1, depth_factor=3.0, color='r'):
     origin = t.ravel()
     w, h = scale, scale
@@ -54,61 +55,90 @@ class Plot:
     @classmethod
     def plot_cameras_frustum(cls, camera_poses, points3d=None, points3d_color=None,
                              scale=0.33, points3d_size=2.5, save_path=None, show=False):
-        angles = [
-            (20, -60), (20, 0), (20, 60),
-            (40, -60), (40, 0), (40, 60),
-            (60, -60), (60, 0), (60, 60)
-        ]
 
-        # Save multiple views
+        elevations = np.linspace(-165, 15, 45)  # 9 values around 0
+        azimuth = 0
+        roll = -90  # roll to apply (90° clockwise)
+
+        def apply_roll(ax, roll_deg):
+            """Apply roll to the 3D axes projection matrix."""
+            roll_rad = np.deg2rad(roll_deg)
+            R = np.array([
+                [np.cos(roll_rad), -np.sin(roll_rad), 0, 0],
+                [np.sin(roll_rad), np.cos(roll_rad), 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]
+            ])
+            proj = ax.get_proj()
+            ax.get_proj = lambda: R @ proj
+
+        # --- Save multiple views ---
         if save_path:
             base_dir, base_file = os.path.split(save_path)
             base_name, ext = os.path.splitext(base_file)
             os.makedirs(base_dir or ".", exist_ok=True)
-            for i, (elev, azim) in enumerate(angles, 1):
+
+            for i, elev in enumerate(elevations, 1):
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection="3d")
                 colors = plt.cm.get_cmap("tab10", len(camera_poses))
+
+                # plot camera frustums
                 for j, (R, C) in enumerate(camera_poses):
                     color = colors(j)
                     draw_camera_frustum(ax, R, C, scale=scale, color=color)
                     ax.scatter([], [], [], c=[color], marker="o", label=f"Camera {j + 1}")
+
+                # plot 3D points
                 if points3d is not None:
                     if points3d_color is not None:
-                        colors_norm = points3d_color.astype(np.float32)/255.0
-                        ax.scatter(points3d[:,0], points3d[:,1], points3d[:,2],
+                        colors_norm = points3d_color.astype(np.float32) / 255.0
+                        ax.scatter(points3d[:, 0], points3d[:, 1], points3d[:, 2],
                                    c=colors_norm, s=points3d_size)
                     else:
-                        ax.scatter(points3d[:,0], points3d[:,1], points3d[:,2],
+                        ax.scatter(points3d[:, 0], points3d[:, 1], points3d[:, 2],
                                    c="g", s=points3d_size)
-                ax.set_xlabel("X"); ax.set_ylabel("Y"); ax.set_zlabel("Z")
-                ax.set_box_aspect([1,1,1])
-                ax.view_init(elev=elev, azim=azim)
-                plt.savefig(os.path.join(base_dir, f"{base_name}_{i}{ext}"))
-                plt.close(fig)  # save-only figures closed
 
-        # Interactive figure
+                ax.set_xlabel("X")
+                ax.set_ylabel("Y")
+                ax.set_zlabel("Z")
+                ax.set_box_aspect([1, 1, 1])
+                ax.view_init(elev=elev, azim=azimuth)
+                apply_roll(ax, roll)  # apply 90° clockwise roll
+
+                plt.savefig(os.path.join(base_dir, f"{base_name}_{i}{ext}"))
+                plt.close(fig)
+
+        # --- Interactive figure ---
         if show:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
             colors = plt.cm.get_cmap("tab10", len(camera_poses))
+
             for j, (R, C) in enumerate(camera_poses):
                 color = colors(j)
                 draw_camera_frustum(ax, R, C, scale=scale, color=color)
                 ax.scatter([], [], [], c=[color], marker="o", label=f"Camera {j + 1}")
+
             if points3d is not None:
                 if points3d_color is not None:
-                    colors_norm = points3d_color.astype(np.float32)/255.0
-                    ax.scatter(points3d[:,0], points3d[:,1], points3d[:,2],
+                    colors_norm = points3d_color.astype(np.float32) / 255.0
+                    ax.scatter(points3d[:, 0], points3d[:, 1], points3d[:, 2],
                                c=colors_norm, s=points3d_size)
                 else:
-                    ax.scatter(points3d[:,0], points3d[:,1], points3d[:,2],
+                    ax.scatter(points3d[:, 0], points3d[:, 1], points3d[:, 2],
                                c="g", s=points3d_size)
-            ax.set_xlabel("X"); ax.set_ylabel("Y"); ax.set_zlabel("Z")
-            ax.set_box_aspect([1,1,1])
-            ax.view_init(elev=20, azim=-60)
+
+            ax.set_xlabel("X")
+            ax.set_ylabel("Y")
+            ax.set_zlabel("Z")
+            ax.set_box_aspect([1, 1, 1])
+            ax.view_init(elev=0, azim=azimuth)
+            apply_roll(ax, roll)  # apply roll
+
             cls._figures_to_show.append(fig)
             return fig
+
 
     @classmethod
     def plot_cameras_surface(cls, camera_poses, points3d=None, points3d_color=None,

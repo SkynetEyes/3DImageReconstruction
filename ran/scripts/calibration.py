@@ -17,7 +17,7 @@ objpoints = []  # 3D points in real world space
 imgpoints = []  # 2D points in image plane
 
 # --- Load your chessboard images ---
-images = glob.glob("../SampleSet/Banana2/calib_images/*.jpg")
+images = glob.glob("../SampleSet/Chess/*.jpeg")
 
 for fname in images:
     img = cv2.imread(fname)
