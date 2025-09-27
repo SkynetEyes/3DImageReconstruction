@@ -1,5 +1,7 @@
 import cv2
 import pathlib
+from natsort import natsorted, ns
+
 
 class ImageMisc:
     @classmethod
@@ -7,7 +9,7 @@ class ImageMisc:
         paths = []
         for path in pathlib.Path(root_dir).glob(filter):
             paths.append(str(path))
-        paths = sorted(paths)
+        paths = natsorted(paths, alg=ns.PATH | ns.F)
         return paths
 
     @classmethod

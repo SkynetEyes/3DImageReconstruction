@@ -1,0 +1,67 @@
+Calibration RMS error: 1.2332738718476928
+
+Camera matrix:
+[[2.59530310e+03 0.00000000e+00 8.15407092e+02]
+ [0.00000000e+00 2.57686065e+03 7.81447017e+02]
+ [0.00000000e+00 0.00000000e+00 1.00000000e+00]]
+
+Distortion coefficients:
+[ 5.69366546e-02  3.41494481e+00 -4.78577609e-03  4.06826352e-02
+ -2.29030490e+01]
+
+Image 0: 
+Rotation vector: [-0.3067236  -0.22700538  0.05435451]
+Translation vector (in mm): [-119.62551719  -93.08072337  545.74211208]
+
+Image 1: 
+Rotation vector: [-0.25124382 -0.27988179  1.19731324]
+Translation vector (in mm): [ -16.95971018 -115.3235365   657.8188785 ]
+
+Image 2: 
+Rotation vector: [ 0.0128853  -0.18303113  0.34544384]
+Translation vector (in mm): [ -94.04743873 -118.7925617   609.96759986]
+
+Image 3: 
+Rotation vector: [-0.01586673 -0.22144209  0.16444034]
+Translation vector (in mm): [-103.67884261 -108.60783809  619.76877324]
+
+Image 4: 
+Rotation vector: [-0.54850363 -0.24829192 -0.06584333]
+Translation vector (in mm): [-151.11072133  -64.58421765  787.33139871]
+
+Image 5: 
+Rotation vector: [ 0.00212477 -0.36743663  1.35513045]
+Translation vector (in mm): [ 28.326215   -91.87900677 486.48463916]
+
+Image 6: 
+Rotation vector: [-0.38506027 -0.27979993  0.16429032]
+Translation vector (in mm): [-106.32799208  -83.61573013  562.72467123]
+
+Image 7: 
+Rotation vector: [ 0.07926717 -0.44208001  1.40996808]
+Translation vector (in mm): [ 28.33002135 -91.68201001 484.66641613]
+
+Image 8: 
+Rotation vector: [-0.27364047 -0.23277966  1.38447028]
+Translation vector (in mm): [ 2.51046043e-01 -1.09473936e+02  6.75207874e+02]
+
+Image 9: 
+Rotation vector: [-0.63221724 -0.20821641 -0.05943892]
+Translation vector (in mm): [-156.5083106   -28.36927273  789.6526226 ]
+
+Image 10: 
+Rotation vector: [-0.18248191 -0.22776895 -0.04116314]
+Translation vector (in mm): [-146.68437129 -176.36839558  753.48187212]
+
+Image 11: 
+Rotation vector: [ 0.40480284 -0.231521    0.03235698]
+Translation vector (in mm): [-115.77477184  -93.07398211  471.069061  ]
+
+Image 12: 
+Rotation vector: [ 0.47906828 -0.18906634  0.20751677]
+Translation vector (in mm): [-100.83986845 -114.4663444   469.33107903]
+
+Image 13: 
+Rotation vector: [-0.66737834 -0.13716351  0.03215666]
+Translation vector (in mm): [-144.69800825   -9.6981603   792.32009347]
+
