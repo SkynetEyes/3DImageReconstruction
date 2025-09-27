@@ -1,6 +1,6 @@
 import os
 import cv2
-
+import json
 
 from classes.plot import Plot
 from classes.imagemisc import  ImageMisc
@@ -69,7 +69,7 @@ def StructedFromMotionPair(imag1Path, imag2Path, save_plot_dir="output", show_pl
 
     # 5. Fundamental matrix + epipolar geometry
     sip.estimate_fundamental_matrix(ransacReprojThreshold=0.25, confidence=0.99)
-    sip.evaluate_fundamental_estimation_quality()
+    fundamental_results = sip.evaluate_fundamental_estimation_quality()
 
     imag1_epipolar, imag2_epipolar = sip.imag_w_epipolar(num_points=200, scale=2.5, point_size=20)
     Plot.plot_images_grid([imag1_epipolar, imag2_epipolar], 1, 2, (15, 10),
@@ -90,9 +90,19 @@ def StructedFromMotionPair(imag1Path, imag2Path, save_plot_dir="output", show_pl
 
     # 7. Essential matrix + pose + 3D reconstruction
     sip.estimate_essential_matrix()
-    sip.evaluate_essential_estimation_quality()
+    essential_results = sip.evaluate_essential_estimation_quality()
     sip.estimate_pose()
     sip.estimate_points3d()
+
+    # Save evaluation results to JSON
+    eval_results = {
+        "fundamental_matrix": fundamental_results,
+        "essential_matrix": essential_results
+    }
+
+    json_path = os.path.join(save_plot_dir, "evaluation_results.json")
+    with open(json_path, "w") as f:
+        json.dump(eval_results, f, indent=2)
 
     R1, t1 = sip.get_camera_1_pose()
     R2, t2 = sip.get_camera_2_pose()
@@ -122,7 +132,8 @@ DATA = {
     'banana3': Data.get_banana3,
     'cubo': Data.get_cubo,
     'rosto': Data.get_rosto,
-    'cachorro': Data.get_cachorro
+    'cachorro': Data.get_cachorro,
+    'celula': Data.get_celula
 }
 
 if __name__ == '__main__':

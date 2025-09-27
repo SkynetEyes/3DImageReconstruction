@@ -161,3 +161,22 @@ class Data:
 
         paths = ImageMisc.get_paths(folder, '*')
         return paths
+
+    @classmethod
+    def get_celula(cls, n: int):
+        ROOT_DIR = '../SampleSet/Celula'
+
+        # Allowed folders (ignore calib_images and anything else)
+        allowed_folders = {f"ce_{i}" for i in range(2, 8)} | {"ce_all"}
+
+        if n == 0:
+            folder = os.path.join(ROOT_DIR, "ce_all")
+        else:
+            folder = os.path.join(ROOT_DIR, f"ce_{n}")
+
+        # Ensure only valid folders are used
+        if not os.path.basename(folder) in allowed_folders:
+            raise ValueError(f"Folder {folder} is not a valid Celula dataset")
+
+        paths = ImageMisc.get_paths(folder, '*')
+        return paths

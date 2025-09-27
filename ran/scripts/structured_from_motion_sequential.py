@@ -21,11 +21,12 @@ DATA = {
     'banana3': Data.get_banana3,
     'cubo': Data.get_cubo,
     'rosto': Data.get_rosto,
-    'cachorro': Data.get_cachorro
+    'cachorro': Data.get_cachorro,
+    'celula': Data.get_celula
 }
 
 if __name__ == '__main__':
-    dataset = 'cubo'
+    dataset = 'rosto'
     samples = 5
     paths = DATA[dataset](samples)
     print(paths)

@@ -1,0 +1,32 @@
+{
+  "fundamental_matrix": {
+    "mean_algebraic": 6.450920183136422e-05,
+    "median_algebraic": 5.6642214171453986e-05,
+    "mean_sampson": 0.002661611221759975,
+    "median_sampson": 0.0009485714720436166,
+    "mean_symmetric_epipolar": 0.04840218819155785,
+    "median_symmetric_epipolar": 0.042156911291770134,
+    "rank": 2,
+    "singular_values": [
+      "1.000e+00",
+      "2.850e-06",
+      "2.874e-19"
+    ],
+    "n_inliers": 20
+  },
+  "essential_matrix": {
+    "mean_algebraic": 6.45092018321615e-05,
+    "median_algebraic": 5.664221417123194e-05,
+    "mean_sampson": 1.5864439140385167e-10,
+    "median_sampson": 5.653926563408613e-11,
+    "mean_symmetric_epipolar": 1.1816943814685141e-05,
+    "median_symmetric_epipolar": 1.0292217534561384e-05,
+    "rank": 2,
+    "singular_values": [
+      "6.777e+00",
+      "5.527e+00",
+      "2.651e-16"
+    ],
+    "n_inliers": 20
+  }
+}
